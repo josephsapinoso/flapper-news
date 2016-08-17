@@ -10,7 +10,7 @@ app.config([
                 url: '/home',
                 templateUrl: '/home.html',
                 controller: 'MainCtrl',
-                resolve: {
+                resolve: { // ensures posts are loaded to site
                     postPromise: ['posts', function(posts) {
                         return posts.getAll();
                     }]
@@ -26,20 +26,29 @@ app.config([
         $urlRouterProvider.otherwise('home');
 }]);
 
-app.factory('posts', ['$http',function($http){ // inject the $http service
+app.factory('posts', ['$http', function($http){ // inject the $http service
     // service body 
     var o = {
         posts: []
     };
 
-    o.getAll = function() {  // this loads in our route for getting our posts from the server 
+    // this loads in our route for getting our posts from the server 
+    o.getAll = function() {
         return $http.get('/posts').success(function(data){
             angular.copy(data, o.posts);
         });
-    }
+    };
+
+    // create a method for ensuring new posts added are persisent 
+    o.create = function(post) {
+        return $http.post('/posts', post).success(function(data){
+            o.posts.push(data);
+        });
+    };
 
     return o; 
-}])
+
+}]);
 
 app.controller('MainCtrl', [
     '$scope', // scope allows controllers to interact and share data with angular templates.
@@ -49,20 +58,15 @@ app.controller('MainCtrl', [
 
         $scope.posts = posts.posts;
 
-        $scope.addPost = function(){
-            if (!$scope.title || $scope.title === '') { return; }
-            $scope.posts.push({
-                title: $scope.title,
-                link: $scope.link,
-                upvotes: 0,
-                comments: [
-                    {author: 'Joe', body: 'Cool post!', upvotes: 0},
-                    {author: 'Bob', body: 'Great idea but everything is wrong!', upvotes:0}
-                ]
-            }); 
-            $scope.title = '';
-            $scope.link = '';
-        };
+    $scope.addPost = function(){
+        if(!$scope.title || $scope.title === '') { return; }
+        posts.create({
+            title: $scope.title,
+            link: $scope.link,
+        });
+        $scope.title = '';
+        $scope.link = '';
+    };
 
         $scope.incrementUpvotes = function(post) {
             post.upvotes += 1;
