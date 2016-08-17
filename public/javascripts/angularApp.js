@@ -9,7 +9,12 @@ app.config([
             .state('home', {
                 url: '/home',
                 templateUrl: '/home.html',
-                controller: 'MainCtrl'
+                controller: 'MainCtrl',
+                resolve: {
+                    postPromise: ['posts', function(posts) {
+                        return posts.getAll();
+                    }]
+                }
             })
 
             .state('posts', {
@@ -21,11 +26,18 @@ app.config([
         $urlRouterProvider.otherwise('home');
 }]);
 
-app.factory('posts', [function(){
+app.factory('posts', ['$http',function($http){ // inject the $http service
     // service body 
     var o = {
         posts: []
     };
+
+    o.getAll = function() {  // this loads in our route for getting our posts from the server 
+        return $http.get('/posts').success(function(data){
+            angular.copy(data, o.posts);
+        });
+    }
+
     return o; 
 }])
 
