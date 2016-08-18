@@ -41,8 +41,15 @@ app.factory('posts', ['$http', function($http){ // inject the $http service
 
     // create a method for ensuring new posts added are persisent 
     o.create = function(post) {
-        return $http.post('/posts', post).success(function(data){
+        return $http.post('/posts/', post).success(function(data){
             o.posts.push(data);
+        });
+    };
+
+    o.upvote = function(post) {
+      return $http.put('/posts/' + post._id + '/upvote')
+        .success(function(data){
+          post.upvotes += 1;
         });
     };
 
@@ -60,7 +67,7 @@ app.controller('MainCtrl', [
 
     $scope.addPost = function(){
         if(!$scope.title || $scope.title === '') { return; }
-        posts.create({
+        posts.create({ // retrieves the create function for making posts
             title: $scope.title,
             link: $scope.link,
         });
@@ -69,7 +76,7 @@ app.controller('MainCtrl', [
     };
 
         $scope.incrementUpvotes = function(post) {
-            post.upvotes += 1;
+            posts.upvote(post);
         };
 }]);
 
